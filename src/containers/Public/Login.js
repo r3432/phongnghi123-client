@@ -4,96 +4,89 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import * as actions from '../../store/actions'
 import { useDispatch, useSelector } from 'react-redux'
 import Swal from 'sweetalert2'
-import validate from '../../ultils/Common/validateFields'
-
 
 const Login = () => {
-    const location = useLocation();
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { isLoggedIn, msg, update } = useSelector(state => state.auth);
-    const [isRegister, setIsRegister] = useState(location.state?.flag);
-    const [invalidFields, setInvalidFields] = useState([]);
+    const location = useLocation()
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+    const { isLoggedIn, msg, update } = useSelector(state => state.auth)
+    const [isRegister, setIsRegister] = useState(location.state?.flag)
+    const [invalidFields, setInvalidFields] = useState([])
     const [payload, setPayload] = useState({
         phone: '',
         password: '',
         name: ''
-    });
+    })
+    useEffect(() => {
+        setIsRegister(location.state?.flag)
+    }, [location.state?.flag])
 
     useEffect(() => {
-        setIsRegister(location.state?.flag);
-    }, [location.state?.flag]);
+        isLoggedIn && navigate('/')
+    }, [isLoggedIn])
 
     useEffect(() => {
-        if (isLoggedIn) {
-            Swal.fire('Success!', 'Đăng nhập thành công!', 'success');
-            navigate('/');
-        }
-    }, [isLoggedIn]);
-
-    useEffect(() => {
-        if (msg) {
-            Swal.fire('Oops!', msg, 'error');
-        }
-    }, [msg, update]);
+        msg && Swal.fire('Oops !', msg, 'error')
+    }, [msg, update])
 
     const handleSubmit = async () => {
         let finalPayload = isRegister ? payload : {
             phone: payload.phone,
             password: payload.password
         };
-        let invalids = validate(finalPayload, setInvalidFields);
+        
+        let invalids = validate(finalPayload);
         if (invalids === 0) {
             if (isRegister) {
-                dispatch(actions.register(payload));
+                await dispatch(actions.register(payload));
+                Swal.fire('Thành công!', 'Bạn đã đăng ký thành công!', 'success');
             } else {
-                dispatch(actions.login(payload));
+                await dispatch(actions.login(payload));
+                Swal.fire('Thành công!', 'Bạn đã đăng nhập thành công!', 'success');
             }
         }
     };
-
-    // Thêm hiệu ứng thông báo cho việc đăng ký thành công
-    useEffect(() => {
-        if (msg && !isLoggedIn) {
-            Swal.fire('Success!', 'Đăng ký thành công!', 'success');
-            navigate('/');
-        }
-    }, [msg, isLoggedIn]);
-
     
-// const Login = () => {
-//     const location = useLocation()
-//     const dispatch = useDispatch()
-//     const navigate = useNavigate()
-//     const { isLoggedIn, msg, update } = useSelector(state => state.auth)
-//     const [isRegister, setIsRegister] = useState(location.state?.flag)
-//     const [invalidFields, setInvalidFields] = useState([])
-//     const [payload, setPayload] = useState({
-//         phone: '',
-//         password: '',
-//         name: ''
-//     })
-//     useEffect(() => {
-//         setIsRegister(location.state?.flag)
-//     }, [location.state?.flag])
+    const validate = (payload) => {
+        let invalids = 0
+        let fields = Object.entries(payload)
+        fields.forEach(item => {
+            if (item[1] === '') {
+                setInvalidFields(prev => [...prev, {
+                    name: item[0],
+                    message: 'Bạn không được bỏ trống trường này.'
+                }])
+                invalids++
+            }
+        })
+        fields.forEach(item => {
+            switch (item[0]) {
+                case 'password':
+                    if (item[1].length < 6) {
+                        setInvalidFields(prev => [...prev, {
+                            name: item[0],
+                            message: 'Mật khẩu phải có tối thiểu 6 kí tự.'
+                        }])
+                        invalids++
+                    }
+                    break;
+                case 'phone':
+                    if (!+item[1]) {
+                        setInvalidFields(prev => [...prev, {
+                            name: item[0],
+                            message: 'Số điện thoại không hợp lệ.'
+                        }])
+                        invalids++
+                    }
+                    break
 
-//     useEffect(() => {
-//         isLoggedIn && navigate('/')
-//     }, [isLoggedIn])
+                default:
+                    break;
+            }
+        })
+        return invalids
+    }
 
-//     useEffect(() => {
-//         msg && Swal.fire('Oops !', msg, 'error')
-//     }, [msg, update])
-
-//     const handleSubmit = async () => {
-//         let finalPayload = isRegister ? payload : {
-//             phone: payload.phone,
-//             password: payload.password
-//         }
-//         let invalids = validate(finalPayload, setInvalidFields)
-//         if (invalids === 0) isRegister ? dispatch(actions.register(payload)) : dispatch(actions.login(payload))
-//     }
-  
 
     return (
         <div className='w-full flex items-center justify-center'>
