@@ -6,38 +6,93 @@ import { useDispatch, useSelector } from 'react-redux'
 import Swal from 'sweetalert2'
 import validate from '../../ultils/Common/validateFields'
 
+
 const Login = () => {
-    const location = useLocation()
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
-    const { isLoggedIn, msg, update } = useSelector(state => state.auth)
-    const [isRegister, setIsRegister] = useState(location.state?.flag)
-    const [invalidFields, setInvalidFields] = useState([])
+    const location = useLocation();
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { isLoggedIn, msg, update } = useSelector(state => state.auth);
+    const [isRegister, setIsRegister] = useState(location.state?.flag);
+    const [invalidFields, setInvalidFields] = useState([]);
     const [payload, setPayload] = useState({
         phone: '',
         password: '',
         name: ''
-    })
-    useEffect(() => {
-        setIsRegister(location.state?.flag)
-    }, [location.state?.flag])
+    });
 
     useEffect(() => {
-        isLoggedIn && navigate('/')
-    }, [isLoggedIn])
+        setIsRegister(location.state?.flag);
+    }, [location.state?.flag]);
 
     useEffect(() => {
-        msg && Swal.fire('Oops !', msg, 'error')
-    }, [msg, update])
+        if (isLoggedIn) {
+            Swal.fire('Success!', 'Đăng nhập thành công!', 'success');
+            navigate('/');
+        }
+    }, [isLoggedIn]);
+
+    useEffect(() => {
+        if (msg) {
+            Swal.fire('Oops!', msg, 'error');
+        }
+    }, [msg, update]);
 
     const handleSubmit = async () => {
         let finalPayload = isRegister ? payload : {
             phone: payload.phone,
             password: payload.password
+        };
+        let invalids = validate(finalPayload, setInvalidFields);
+        if (invalids === 0) {
+            if (isRegister) {
+                dispatch(actions.register(payload));
+            } else {
+                dispatch(actions.login(payload));
+            }
         }
-        let invalids = validate(finalPayload, setInvalidFields)
-        if (invalids === 0) isRegister ? dispatch(actions.register(payload)) : dispatch(actions.login(payload))
-    }
+    };
+
+    // Thêm hiệu ứng thông báo cho việc đăng ký thành công
+    useEffect(() => {
+        if (msg && !isLoggedIn) {
+            Swal.fire('Success!', 'Đăng ký thành công!', 'success');
+            navigate('/');
+        }
+    }, [msg, isLoggedIn]);
+
+    
+// const Login = () => {
+//     const location = useLocation()
+//     const dispatch = useDispatch()
+//     const navigate = useNavigate()
+//     const { isLoggedIn, msg, update } = useSelector(state => state.auth)
+//     const [isRegister, setIsRegister] = useState(location.state?.flag)
+//     const [invalidFields, setInvalidFields] = useState([])
+//     const [payload, setPayload] = useState({
+//         phone: '',
+//         password: '',
+//         name: ''
+//     })
+//     useEffect(() => {
+//         setIsRegister(location.state?.flag)
+//     }, [location.state?.flag])
+
+//     useEffect(() => {
+//         isLoggedIn && navigate('/')
+//     }, [isLoggedIn])
+
+//     useEffect(() => {
+//         msg && Swal.fire('Oops !', msg, 'error')
+//     }, [msg, update])
+
+//     const handleSubmit = async () => {
+//         let finalPayload = isRegister ? payload : {
+//             phone: payload.phone,
+//             password: payload.password
+//         }
+//         let invalids = validate(finalPayload, setInvalidFields)
+//         if (invalids === 0) isRegister ? dispatch(actions.register(payload)) : dispatch(actions.login(payload))
+//     }
   
 
     return (
